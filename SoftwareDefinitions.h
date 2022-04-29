@@ -29,11 +29,14 @@ HMENU ComPortListMenu;
 char filename[260];
 OPENFILENAMEA ofn;
 
-bool isConnected = false;
+volatile bool isConnected = false;
+volatile bool isThreading = true;
+
 int selectedPort = 1;
-int targetBoudRate;
+int targetBoudRate = 9600;
 
 HANDLE connectedPort;
+HANDLE readThread;
 
 WNDCLASS NewWindowClass(HBRUSH BGColor, HCURSOR Cursor, HINSTANCE hInstance, HICON Icon, LPCWSTR Name, WNDPROC WindowProc);
 LRESULT CALLBACK WindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam);

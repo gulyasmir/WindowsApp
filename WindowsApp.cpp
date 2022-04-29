@@ -28,7 +28,7 @@ int WINAPI wWinMain(HINSTANCE hInstance, HINSTANCE, PWSTR pCmdLine, int nCmdShow
         TranslateMessage(&SoftwareMainMessage);
         DispatchMessage(&SoftwareMainMessage);
     }
-
+    TerminateThread(readThread, 0);
     return 0;
 }
 
@@ -46,11 +46,18 @@ WNDCLASS NewWindowClass(HBRUSH BGColor, HCURSOR Cursor, HINSTANCE hInstance, HIC
     return wc;
 }
 
+void ExitSoftware(void) {
+    isConnected = false;
+    isThreading = false;
+    CloseHandle(connectedPort);
+    CloseHandle(readThread);
+    ExitThread(0);
+    PostQuitMessage(0);
+}
 
 
 LRESULT CALLBACK WindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
-    if (isConnected) { SerialRead(); }
     switch (uMsg)
     {
     case WM_COMMAND:
@@ -117,6 +124,7 @@ LRESULT CALLBACK WindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
         MainWndAddWidgets(hwnd);
         SetOpenFileParams(hwnd);
         SerialUpdate();
+        readThread = CreateThread(NULL, 0, SerialRead, NULL, 0, NULL);
         break;
 
     case WM_CLOSE:
@@ -128,7 +136,7 @@ LRESULT CALLBACK WindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
         return 0;
 
     case WM_DESTROY:
-        PostQuitMessage(0);
+        ExitSoftware();
         return 0;
 
     case WM_PAINT:

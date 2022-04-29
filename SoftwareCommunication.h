@@ -57,15 +57,20 @@ void ConnectRequest(void) {
 	CloseHandle(connectedPort);
 }
 
-void SerialRead(void) {
-	if (!isConnected) { return; }
-	if (!SetCommMask(connectedPort, EV_RXCHAR)) { ConnectRequest(); return; }
+DWORD WINAPI SerialRead(LPVOID lpParameter) {
 	DWORD BytesIterated;
 
-	if (ReadFile(connectedPort, Buffer, 11, &BytesIterated, NULL)) {
-		SetWindowTextA(hEditControl, Buffer);
+	while (isThreading) {
+		if (!isConnected) { continue; }
+		if (!SetCommMask(connectedPort, EV_RXCHAR)) { ConnectRequest(); continue; }
+
+		if (ReadFile(connectedPort, Buffer, 11, &BytesIterated, NULL)) {
+			SetWindowTextA(hEditControl, Buffer);
+		}
 	}
+	return 0;
 }
+
 
 void SerialWrite(char* buffer, int lenth) {
 	if (!isConnected) { return; }
