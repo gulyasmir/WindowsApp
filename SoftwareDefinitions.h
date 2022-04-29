@@ -9,7 +9,7 @@
 #define OnSaveFile 8
 #define OnLoadFile 9
 #define OnReadNumberField 11
-
+#define OnConnectRequest 12
 #define DlgIndexNumber 256
 
 
@@ -26,6 +26,12 @@ HWND hNumberControl;
 char filename[260];
 OPENFILENAMEA ofn;
 
+bool isConnected = false;
+int selectedPort = 1;
+int targetBoudRate;
+
+HANDLE connectedPort;
+
 WNDCLASS NewWindowClass(HBRUSH BGColor, HCURSOR Cursor, HINSTANCE hInstance, HICON Icon, LPCWSTR Name, WNDPROC WindowProc);
 LRESULT CALLBACK WindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam);
 
@@ -34,3 +40,8 @@ void MainWndAddWidgets(HWND hwnd);
 void SaveData(LPCSTR path);
 void LoadData(LPCSTR path);
 void SetOpenFileParams(HWND hwnd);
+
+int SerialBegin(int BaudRate, int Comport);
+void SetWindowStatus(std::string status);
+void ConnectRequest(void);
+void SerialRead(void);

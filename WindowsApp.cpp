@@ -6,7 +6,7 @@
 #include <string>
 #include "Resource.h"
 #include "SoftwareDefinitions.h"
-
+#include "SoftwareCommunication.h"
 
 
 int WINAPI wWinMain(HINSTANCE hInstance, HINSTANCE, PWSTR pCmdLine, int nCmdShow)
@@ -54,6 +54,9 @@ LRESULT CALLBACK WindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
     {
     case WM_COMMAND:
         switch (wParam) {
+        case OnConnectRequest:
+            ConnectRequest();
+            break;
         case OnMenuAction1:
             MessageBoxA(hwnd, "menu 1 has clicked!", "menu 1 worked", MB_OK);
             break;
@@ -149,6 +152,7 @@ void MainWndAddMenus(HWND hwnd) {
 
     AppendMenu(SubMenu, MF_STRING, OnSaveFile, L"Save");
     AppendMenu(SubMenu, MF_STRING, OnLoadFile, L"Load");
+    AppendMenu(SubMenu, MF_STRING, OnConnectRequest, L"Connect");
 
     AppendMenu(SubMenu, MF_POPUP, (UINT_PTR)SubActionMenu, L"Action");
     AppendMenu(SubMenu, MF_SEPARATOR, NULL, NULL);
@@ -225,4 +229,8 @@ void SetOpenFileParams(HWND hwnd) {
     ofn.nMaxFileTitle = 0;
     ofn.lpstrInitialDir = "C:\\source\\";
     ofn.Flags = OFN_PATHMUSTEXIST | OFN_FILEMUSTEXIST;
+}
+
+void SetWindowStatus(std::string status) {
+    SetWindowTextA(hStaticControl, status.c_str());
 }
