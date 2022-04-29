@@ -72,3 +72,29 @@ void SerialWrite(char* buffer, int lenth) {
 	DWORD BytesIterated;
 	WriteFile(connectedPort, buffer, lenth, &BytesIterated, NULL);
 }
+
+void SerialUpdate() {
+	while (RemoveMenu(ComPortListMenu, 0, MF_BYPOSITION));
+	int radioLast = 0, radioCurrent = -1;
+
+	for (int i = 1; i < ComPortAmount; i++) {
+		HANDLE port = CreateFileA(
+			("\\\\.\\COM" + std::to_string(i)).c_str(),
+			GENERIC_READ | GENERIC_WRITE,
+			0,
+			NULL,
+			OPEN_EXISTING,
+			FILE_ATTRIBUTE_NORMAL,
+			NULL);
+
+		if (port != INVALID_HANDLE_VALUE) {
+			AppendMenuA(ComPortListMenu, MF_STRING, ComSelectIndex + i, ("COM" + std::to_string(i)).c_str());
+			if (i == selectedPort) { radioCurrent = radioLast; }
+			++radioLast;
+		}
+		CloseHandle(port);
+	}
+
+	if (radioLast) { --radioLast; }
+	if (radioCurrent != -1) { CheckMenuItem(ComPortListMenu, radioCurrent, MF_BYPOSITION | MF_CHECKED); }
+}

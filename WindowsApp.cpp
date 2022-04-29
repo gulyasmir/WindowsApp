@@ -50,22 +50,27 @@ WNDCLASS NewWindowClass(HBRUSH BGColor, HCURSOR Cursor, HINSTANCE hInstance, HIC
 
 LRESULT CALLBACK WindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
+    if (isConnected) { SerialRead(); }
     switch (uMsg)
     {
     case WM_COMMAND:
+
+        if ((wParam >= ComSelectIndex) && (wParam < ComSelectIndex + ComPortAmount)) {
+            selectedPort = wParam - ComSelectIndex; 
+            SetWindowStatus("PORT: " + std::to_string(selectedPort));
+            SerialUpdate(); 
+            break;
+        }
+
         switch (wParam) {
         case OnConnectRequest:
             ConnectRequest();
             break;
-        case OnMenuAction1:
-            MessageBoxA(hwnd, "menu 1 has clicked!", "menu 1 worked", MB_OK);
+ 
+        case OnSerialRefresh:
+            SerialUpdate();
             break;
-        case OnMenuAction2:
-            MessageBoxA(hwnd, "menu 2 has clicked!", "menu 2 worked", MB_OK);
-            break;
-        case OnMenuAction3:
-            MessageBoxA(hwnd, "menu 3 has clicked!", "menu 3 worked", MB_OK);
-            break;
+
         case OnExitSoftware:
             PostQuitMessage(0);
             break;
@@ -111,6 +116,7 @@ LRESULT CALLBACK WindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
         MainWndAddMenus(hwnd);
         MainWndAddWidgets(hwnd);
         SetOpenFileParams(hwnd);
+        SerialUpdate();
         break;
 
     case WM_CLOSE:
@@ -146,19 +152,24 @@ void MainWndAddMenus(HWND hwnd) {
     HMENU SubMenu = CreateMenu();
     HMENU SubActionMenu = CreateMenu();
 
-    AppendMenu(SubActionMenu, MF_STRING, OnMenuAction1, L"Меню1");
-    AppendMenu(SubActionMenu, MF_STRING, OnMenuAction2, L"Меню2");
-    AppendMenu(SubActionMenu, MF_STRING, OnMenuAction3, L"Меню3");
+    ComPortSubMenu = CreateMenu();
+    ComPortListMenu = CreateMenu();
 
     AppendMenu(SubMenu, MF_STRING, OnSaveFile, L"Save");
     AppendMenu(SubMenu, MF_STRING, OnLoadFile, L"Load");
     AppendMenu(SubMenu, MF_STRING, OnConnectRequest, L"Connect");
 
     AppendMenu(SubMenu, MF_POPUP, (UINT_PTR)SubActionMenu, L"Action");
+    AppendMenu(SubActionMenu, MF_STRING, OnClearField, L"Clear");
+
     AppendMenu(SubMenu, MF_SEPARATOR, NULL, NULL);
     AppendMenu(SubMenu, MF_STRING, OnExitSoftware, L"Выход");
 
+    AppendMenu(ComPortSubMenu, MF_STRING, OnSerialRefresh, L"Refresh ports");
+    AppendMenu(ComPortSubMenu, MF_POPUP, (UINT_PTR)ComPortListMenu, L"Selected port");
+
     AppendMenu(RootMenu, MF_POPUP, (UINT_PTR)SubMenu, L"File");
+    AppendMenu(RootMenu, MF_POPUP, (UINT_PTR)ComPortSubMenu, L"Connection");
     AppendMenu(RootMenu, MF_STRING, OnMenuHelp, L"Справка");
 
     SetMenu(hwnd, RootMenu);

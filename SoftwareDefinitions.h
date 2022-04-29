@@ -1,7 +1,6 @@
 #pragma once
-#define OnMenuAction1 1
-#define OnMenuAction2 2
-#define OnMenuAction3 3
+#define OnSerialRefresh 1
+
 #define OnExitSoftware 4
 #define OnClearField 5
 #define OnMenuHelp 6
@@ -10,10 +9,11 @@
 #define OnLoadFile 9
 #define OnReadNumberField 11
 #define OnConnectRequest 12
+
 #define DlgIndexNumber 256
-
-
 #define	TextBufferSize 256
+#define ComPortAmount 50
+#define ComSelectIndex 120
 
 char Buffer[TextBufferSize];
 int CharsRead;
@@ -22,6 +22,9 @@ unsigned num;
 HWND hEditControl;
 HWND hStaticControl;
 HWND hNumberControl;
+
+HMENU ComPortSubMenu;
+HMENU ComPortListMenu;
 
 char filename[260];
 OPENFILENAMEA ofn;
