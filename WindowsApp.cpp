@@ -3,6 +3,7 @@
 #endif 
 
 #include <windows.h>
+#include <string>
 #include "Resource.h"
 #include "SoftwareDefinitions.h"
 
@@ -14,37 +15,12 @@ int WINAPI wWinMain(HINSTANCE hInstance, HINSTANCE, PWSTR pCmdLine, int nCmdShow
     // Register the window class.
 
     WNDCLASS SoftwareMainClass = NewWindowClass((HBRUSH)COLOR_WINDOW, LoadCursor(NULL, IDC_ARROW), hInstance, LoadIcon(hInstance, MAKEINTRESOURCE(IDI_ICON1)), L"MainWndClass", WindowProc);
-   // RegisterClass(&SoftwareMainClass);
 
     if (!RegisterClassW(&SoftwareMainClass)) {return -1;}
     MSG SoftwareMainMessage = { 0 };
 
     CreateWindow(L"MainWndClass", L"Окно-болванка", WS_OVERLAPPEDWINDOW | WS_VISIBLE, CW_USEDEFAULT, CW_USEDEFAULT, CW_USEDEFAULT, CW_USEDEFAULT, NULL, NULL, NULL, NULL);
 
-    // Create the window.
-/*
-    HWND hwnd = CreateWindowEx(
-        0,                              // Optional window styles.
-        L"MainWndClass",                     // Window class
-        L"Окно-болванка",    // Window text
-        WS_OVERLAPPEDWINDOW,            // Window style
-
-        // Size and position
-        CW_USEDEFAULT, CW_USEDEFAULT, CW_USEDEFAULT, CW_USEDEFAULT,
-
-        NULL,       // Parent window    
-        NULL,       // Menu
-        hInstance,  // Instance handle
-        NULL        // Additional application data
-    );
-
-    if (hwnd == NULL)
-    {
-        return 0;
-    }
-
-    ShowWindow(hwnd, nCmdShow);
-    */
     // Run the message loop.
 
     while (GetMessage(&SoftwareMainMessage, NULL, NULL, NULL))
@@ -57,7 +33,6 @@ int WINAPI wWinMain(HINSTANCE hInstance, HINSTANCE, PWSTR pCmdLine, int nCmdShow
 }
 
 WNDCLASS NewWindowClass(HBRUSH BGColor, HCURSOR Cursor, HINSTANCE hInstance, HICON Icon, LPCWSTR Name, WNDPROC WindowProc) {
-  //  const wchar_t CLASS_NAME[] = L"Sample Window Class";
 
     WNDCLASS wc = { };
 
@@ -70,8 +45,6 @@ WNDCLASS NewWindowClass(HBRUSH BGColor, HCURSOR Cursor, HINSTANCE hInstance, HIC
 
     return wc;
 }
-
-
 
 
 
@@ -94,13 +67,38 @@ LRESULT CALLBACK WindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
             PostQuitMessage(0);
             break;
 
-        case OnButtonClear:
+        case OnClearField:
             SetWindowTextA(hEditControl, "");
             break;
 
         case OnMenuHelp:
             MessageBoxA(hwnd, "Текст справки!", "Справка", MB_OK);
             break;   
+
+        case OnReadField:
+            CharsRead = GetWindowTextA(hEditControl, Buffer, TextBufferSize);
+            SetWindowTextA(hStaticControl, Buffer);
+            SetWindowTextA(hStaticControl, ("Прочитано символов:" + std::to_string(CharsRead)).c_str());
+
+            break;
+            
+        case OnReadNumberField:
+            num = GetDlgItemInt(hwnd, DlgIndexNumber, FALSE, FALSE);
+            SetWindowTextA(hStaticControl, std::to_string(num).c_str());
+            break;
+
+        case OnSaveFile:
+            if (GetSaveFileNameA(&ofn)) {
+                SaveData(filename);
+           }
+
+            break;
+
+        case OnLoadFile:
+            if (GetSaveFileNameA(&ofn)) {
+                LoadData(filename);
+            }
+            break;
 
         default:  break;
         }
@@ -109,6 +107,7 @@ LRESULT CALLBACK WindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
     case WM_CREATE:
         MainWndAddMenus(hwnd);
         MainWndAddWidgets(hwnd);
+        SetOpenFileParams(hwnd);
         break;
 
     case WM_CLOSE:
@@ -148,6 +147,9 @@ void MainWndAddMenus(HWND hwnd) {
     AppendMenu(SubActionMenu, MF_STRING, OnMenuAction2, L"Меню2");
     AppendMenu(SubActionMenu, MF_STRING, OnMenuAction3, L"Меню3");
 
+    AppendMenu(SubMenu, MF_STRING, OnSaveFile, L"Save");
+    AppendMenu(SubMenu, MF_STRING, OnLoadFile, L"Load");
+
     AppendMenu(SubMenu, MF_POPUP, (UINT_PTR)SubActionMenu, L"Action");
     AppendMenu(SubMenu, MF_SEPARATOR, NULL, NULL);
     AppendMenu(SubMenu, MF_STRING, OnExitSoftware, L"Выход");
@@ -160,10 +162,67 @@ void MainWndAddMenus(HWND hwnd) {
 
 void MainWndAddWidgets(HWND hwnd) {
 
-    CreateWindowA("static", "Ниже можете написать текст", WS_VISIBLE | WS_CHILD | ES_CENTER, 5, 5, 490, 20, hwnd, NULL, NULL, NULL);
+    hStaticControl = CreateWindowA("static", "Ниже можете написать текст", WS_VISIBLE | WS_CHILD | ES_CENTER, 5, 5, 490, 20, hwnd, NULL, NULL, NULL);
 
     hEditControl = CreateWindowA("edit", "this is edit control", WS_VISIBLE | WS_CHILD | ES_MULTILINE | WS_VSCROLL, 5, 30, 490, 100, hwnd, NULL, NULL, NULL);
 
-    CreateWindowA("button", "Очистить", WS_VISIBLE | WS_CHILD | ES_CENTER, 50, 150, 100, 30, hwnd, (HMENU)OnButtonClear, NULL, NULL);
+    hNumberControl = CreateWindowA("edit", "111", WS_VISIBLE | WS_CHILD | ES_CENTER | ES_NUMBER, 5, 200, 150, 30, hwnd, (HMENU)DlgIndexNumber, NULL, NULL);
 
+    CreateWindowA("button", "Очистить", WS_VISIBLE | WS_CHILD | ES_CENTER, 50, 150, 100, 30, hwnd, (HMENU)OnClearField, NULL, NULL);
+    CreateWindowA("button", "Прочитать", WS_VISIBLE | WS_CHILD | ES_CENTER, 150, 150, 100, 30, hwnd, (HMENU)OnReadField, NULL, NULL);
+    CreateWindowA("button", "Прочитать цифры", WS_VISIBLE | WS_CHILD | ES_CENTER, 150, 250, 150, 30, hwnd, (HMENU)OnReadNumberField, NULL, NULL);
+}
+
+void SaveData(LPCSTR path) {
+    HANDLE FileToSave = CreateFileA(
+        path,
+        GENERIC_WRITE,
+        0,
+        NULL,
+        CREATE_ALWAYS,
+        FILE_ATTRIBUTE_NORMAL,
+        NULL
+    );
+
+    int saveLength = GetWindowTextLength(hEditControl);
+    char* data = new char[saveLength];
+    saveLength = GetWindowTextA(hEditControl, data, saveLength);
+
+    DWORD bytesIterated;
+    WriteFile(FileToSave, data, saveLength, &bytesIterated, NULL);
+
+    CloseHandle(FileToSave);
+    delete[] data;
+}
+
+void LoadData(LPCSTR path) {
+    HANDLE FileToLoad = CreateFileA(
+        path,
+        GENERIC_READ,
+        0,
+        NULL,
+        OPEN_EXISTING,
+        FILE_ATTRIBUTE_NORMAL,
+        NULL
+    );
+
+    DWORD bytesIterated;
+    ReadFile(FileToLoad, Buffer, TextBufferSize, &bytesIterated, NULL);
+
+    SetWindowTextA(hEditControl, Buffer);
+
+    CloseHandle(FileToLoad);
+}
+
+void SetOpenFileParams(HWND hwnd) {
+    ZeroMemory(&ofn, sizeof(ofn));
+    ofn.lStructSize = sizeof(ofn);
+    ofn.hwndOwner = hwnd;
+    ofn.lpstrFile = filename;
+    ofn.nMaxFile = sizeof(filename);
+    ofn.lpstrFilter = "*.txt";
+    ofn.lpstrFileTitle = NULL;
+    ofn.nMaxFileTitle = 0;
+    ofn.lpstrInitialDir = "C:\\source\\";
+    ofn.Flags = OFN_PATHMUSTEXIST | OFN_FILEMUSTEXIST;
 }
