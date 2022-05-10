@@ -19,7 +19,7 @@ int WINAPI wWinMain(HINSTANCE hInstance, HINSTANCE, PWSTR pCmdLine, int nCmdShow
     if (!RegisterClassW(&SoftwareMainClass)) {return -1;}
     MSG SoftwareMainMessage = { 0 };
 
-    CreateWindow(L"MainWndClass", L"Окно-болванка", WS_OVERLAPPEDWINDOW | WS_VISIBLE, CW_USEDEFAULT, CW_USEDEFAULT, CW_USEDEFAULT, CW_USEDEFAULT, NULL, NULL, NULL, NULL);
+    CreateWindow(L"MainWndClass", L"Сканер отпечатка пальца", WS_OVERLAPPEDWINDOW | WS_VISIBLE, 100, 100, 800, 400, NULL, NULL, NULL, NULL);
 
     // Run the message loop.
 
@@ -87,19 +87,22 @@ LRESULT CALLBACK WindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
             break;
 
         case OnMenuHelp:
-            MessageBoxA(hwnd, "Текст справки!", "Справка", MB_OK);
+            MessageBoxA(hwnd, "Это программа интерфейс для взаимодействия со сканером отпечатка пальца.", "Справка", MB_OK);
             break;   
 
         case OnReadField:
             CharsRead = GetWindowTextA(hEditControl, Buffer, TextBufferSize);
-            SetWindowTextA(hStaticControl, Buffer);
-            SetWindowTextA(hStaticControl, ("Прочитано символов:" + std::to_string(CharsRead)).c_str());
-
+            SetWindowTextA(hStaticControlReadText, Buffer); 
             break;
             
+        case OnReadCountText:
+            CharsRead = GetWindowTextA(hEditControl, Buffer, TextBufferSize);
+            SetWindowTextA(hStaticControlReadCountText, ("Количество символов:" + std::to_string(CharsRead)).c_str());
+            break;
+
         case OnReadNumberField:
             num = GetDlgItemInt(hwnd, DlgIndexNumber, FALSE, FALSE);
-            SetWindowTextA(hStaticControl, std::to_string(num).c_str());
+            SetWindowTextA(hStaticControlReadNumber, std::to_string(num).c_str());
             break;
 
         case OnSaveFile:
@@ -128,9 +131,10 @@ LRESULT CALLBACK WindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
         break;
 
     case WM_CLOSE:
-        if (MessageBox(hwnd, L"Вы точно хотите закрыть программу?", L"Форточка с вопросом", MB_OKCANCEL) == IDOK)
+        if (MessageBox(hwnd, L"Вы точно хотите закрыть программу?", L"Закрытие программы", MB_OKCANCEL) == IDOK)
         {
-            DestroyWindow(hwnd);
+           // DestroyWindow(hwnd);
+            ExitSoftware();
         }
         // Else: User canceled. Do nothing.
         return 0;
@@ -163,21 +167,21 @@ void MainWndAddMenus(HWND hwnd) {
     ComPortSubMenu = CreateMenu();
     ComPortListMenu = CreateMenu();
 
-    AppendMenu(SubMenu, MF_STRING, OnSaveFile, L"Save");
-    AppendMenu(SubMenu, MF_STRING, OnLoadFile, L"Load");
-    AppendMenu(SubMenu, MF_STRING, OnConnectRequest, L"Connect");
+    AppendMenu(SubMenu, MF_STRING, OnSaveFile, L"Сохранить текст");
+    AppendMenu(SubMenu, MF_STRING, OnLoadFile, L"Загрузить из файла");
+    AppendMenu(SubMenu, MF_STRING, OnConnectRequest, L"Соединение");
 
-    AppendMenu(SubMenu, MF_POPUP, (UINT_PTR)SubActionMenu, L"Action");
-    AppendMenu(SubActionMenu, MF_STRING, OnClearField, L"Clear");
+    AppendMenu(SubMenu, MF_POPUP, (UINT_PTR)SubActionMenu, L"Действие");
+    AppendMenu(SubActionMenu, MF_STRING, OnClearField, L"Очистить");
 
     AppendMenu(SubMenu, MF_SEPARATOR, NULL, NULL);
     AppendMenu(SubMenu, MF_STRING, OnExitSoftware, L"Выход");
 
-    AppendMenu(ComPortSubMenu, MF_STRING, OnSerialRefresh, L"Refresh ports");
-    AppendMenu(ComPortSubMenu, MF_POPUP, (UINT_PTR)ComPortListMenu, L"Selected port");
+    AppendMenu(ComPortSubMenu, MF_STRING, OnSerialRefresh, L"Обновить порты");
+    AppendMenu(ComPortSubMenu, MF_POPUP, (UINT_PTR)ComPortListMenu, L"Выбрать порт");
 
-    AppendMenu(RootMenu, MF_POPUP, (UINT_PTR)SubMenu, L"File");
-    AppendMenu(RootMenu, MF_POPUP, (UINT_PTR)ComPortSubMenu, L"Connection");
+    AppendMenu(RootMenu, MF_POPUP, (UINT_PTR)SubMenu, L"Файл");
+    AppendMenu(RootMenu, MF_POPUP, (UINT_PTR)ComPortSubMenu, L"Соединения");
     AppendMenu(RootMenu, MF_STRING, OnMenuHelp, L"Справка");
 
     SetMenu(hwnd, RootMenu);
@@ -185,15 +189,23 @@ void MainWndAddMenus(HWND hwnd) {
 
 void MainWndAddWidgets(HWND hwnd) {
 
-    hStaticControl = CreateWindowA("static", "Ниже можете написать текст", WS_VISIBLE | WS_CHILD | ES_CENTER, 5, 5, 490, 20, hwnd, NULL, NULL, NULL);
+    hStaticControl = CreateWindowA("static", "Ввод текста", WS_VISIBLE | WS_CHILD | ES_CENTER, 5, 5, 500, 20, hwnd, NULL, NULL, NULL);
 
-    hEditControl = CreateWindowA("edit", "this is edit control", WS_VISIBLE | WS_CHILD | ES_MULTILINE | WS_VSCROLL, 5, 30, 490, 100, hwnd, NULL, NULL, NULL);
+    hStaticControlReadText = CreateWindowA("static", " ", WS_VISIBLE | WS_CHILD | ES_CENTER, 605, 35, 200, 80, hwnd, NULL, NULL, NULL);
+ 
+    hStaticControlReadCountText = CreateWindowA("static", " ", WS_VISIBLE | WS_CHILD | ES_CENTER, 605, 130, 200, 80, hwnd, NULL, NULL, NULL);
 
-    hNumberControl = CreateWindowA("edit", "111", WS_VISIBLE | WS_CHILD | ES_CENTER | ES_NUMBER, 5, 200, 150, 30, hwnd, (HMENU)DlgIndexNumber, NULL, NULL);
+    hStaticControlReadNumber = CreateWindowA("static", " ", WS_VISIBLE | WS_CHILD | ES_CENTER, 605, 225, 200, 80, hwnd, NULL, NULL, NULL);
 
-    CreateWindowA("button", "Очистить", WS_VISIBLE | WS_CHILD | ES_CENTER, 50, 150, 100, 30, hwnd, (HMENU)OnClearField, NULL, NULL);
-    CreateWindowA("button", "Прочитать", WS_VISIBLE | WS_CHILD | ES_CENTER, 150, 150, 100, 30, hwnd, (HMENU)OnReadField, NULL, NULL);
-    CreateWindowA("button", "Прочитать цифры", WS_VISIBLE | WS_CHILD | ES_CENTER, 150, 250, 150, 30, hwnd, (HMENU)OnReadNumberField, NULL, NULL);
+    hEditControl = CreateWindowA("edit", "Этот текст можно отредактировать", WS_VISIBLE | WS_CHILD | ES_MULTILINE | WS_VSCROLL | WS_BORDER, 5, 30, 570, 100, hwnd, NULL, NULL, NULL);
+
+    hNumberControl = CreateWindowA("edit", "111", WS_VISIBLE | WS_CHILD | ES_CENTER | ES_NUMBER | WS_BORDER, 5, 200, 150, 30, hwnd, (HMENU)DlgIndexNumber, NULL, NULL);
+
+    CreateWindowA("button", "Очистить", WS_VISIBLE | WS_CHILD | ES_CENTER, 10, 150, 100, 30, hwnd, (HMENU)OnClearField, NULL, NULL);
+    CreateWindowA("button", "Считать введенный текст", WS_VISIBLE | WS_CHILD | ES_CENTER, 130, 150, 200, 30, hwnd, (HMENU)OnReadField, NULL, NULL);
+    CreateWindowA("button", "Подсчет символов", WS_VISIBLE | WS_CHILD | ES_CENTER, 350, 150, 200, 30, hwnd, (HMENU)OnReadCountText, NULL, NULL);
+
+    CreateWindowA("button", "Считать введеные цифры", WS_VISIBLE | WS_CHILD | ES_CENTER, 150, 300, 200, 30, hwnd, (HMENU)OnReadNumberField, NULL, NULL);
 }
 
 void SaveData(LPCSTR path) {
