@@ -1,5 +1,6 @@
 #pragma once
 #define OnSerialRefresh 1
+#define OnReadCountText 2
 
 #define OnExitSoftware 4
 #define OnClearField 5
@@ -22,6 +23,10 @@ unsigned num;
 HWND hEditControl;
 HWND hStaticControl;
 HWND hNumberControl;
+
+HWND hStaticControlReadText;
+HWND hStaticControlReadCountText;
+HWND hStaticControlReadNumber;
 
 HMENU ComPortSubMenu;
 HMENU ComPortListMenu;
