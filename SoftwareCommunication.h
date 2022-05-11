@@ -37,7 +37,7 @@ int SerialBegin(int BaudRate, int Comport) {
 void ConnectRequest(void) {
 	if (isConnected) {
 		CloseHandle(connectedPort);
-		SetWindowStatus("Disconnected");
+		SetWindowStatus("Разъединено");
 		isConnected = false;
 		return;
 	}
@@ -51,6 +51,7 @@ void ConnectRequest(void) {
 	case  0: 
 		SetWindowStatus("Connected to: COM " + std::to_string(selectedPort));
 		isConnected = true;
+	
 		return;
 	}
 

@@ -56,6 +56,7 @@ void ExitSoftware(void) {
 }
 
 
+
 LRESULT CALLBACK WindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
     switch (uMsg)
@@ -72,6 +73,7 @@ LRESULT CALLBACK WindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
         switch (wParam) {
         case OnConnectRequest:
             ConnectRequest();
+            ConnectButtonView(hwnd);
             break;
  
         case OnSerialRefresh:
@@ -118,6 +120,15 @@ LRESULT CALLBACK WindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
             }
             break;
 
+        case DisconnectThis:
+            isConnected = false;
+            isThreading = false;
+            CloseHandle(connectedPort);
+            CloseHandle(readThread);
+            SetWindowStatus("Разъединено");
+            DestroyWindow(ConnectedButton);
+            break;
+
         default:  break;
         }
         break;
@@ -134,6 +145,12 @@ LRESULT CALLBACK WindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
         if (MessageBox(hwnd, L"Вы точно хотите закрыть программу?", L"Закрытие программы", MB_OKCANCEL) == IDOK)
         {
            // DestroyWindow(hwnd);
+
+            isConnected = false;
+            isThreading = false;
+            CloseHandle(connectedPort);
+            CloseHandle(readThread);
+
             ExitSoftware();
         }
         // Else: User canceled. Do nothing.
@@ -191,21 +208,35 @@ void MainWndAddWidgets(HWND hwnd) {
 
     hStaticControl = CreateWindowA("static", "Ввод текста", WS_VISIBLE | WS_CHILD | ES_CENTER, 5, 5, 500, 20, hwnd, NULL, NULL, NULL);
 
-    hStaticControlReadText = CreateWindowA("static", " ", WS_VISIBLE | WS_CHILD | ES_CENTER, 605, 35, 200, 80, hwnd, NULL, NULL, NULL);
+    hStaticControlReadText = CreateWindowA("static", " ", WS_VISIBLE | WS_CHILD | ES_CENTER, 600, 35, 200, 80, hwnd, NULL, NULL, NULL);
  
-    hStaticControlReadCountText = CreateWindowA("static", " ", WS_VISIBLE | WS_CHILD | ES_CENTER, 605, 130, 200, 80, hwnd, NULL, NULL, NULL);
+    hStaticControlReadCountText = CreateWindowA("static", " ", WS_VISIBLE | WS_CHILD | ES_CENTER, 600, 130, 200, 80, hwnd, NULL, NULL, NULL);
 
-    hStaticControlReadNumber = CreateWindowA("static", " ", WS_VISIBLE | WS_CHILD | ES_CENTER, 605, 225, 200, 80, hwnd, NULL, NULL, NULL);
+    hStaticControlReadNumber = CreateWindowA("static", " ", WS_VISIBLE | WS_CHILD | ES_CENTER, 350, 200, 200, 30, hwnd, NULL, NULL, NULL);
 
     hEditControl = CreateWindowA("edit", "Этот текст можно отредактировать", WS_VISIBLE | WS_CHILD | ES_MULTILINE | WS_VSCROLL | WS_BORDER, 5, 30, 570, 100, hwnd, NULL, NULL, NULL);
 
-    hNumberControl = CreateWindowA("edit", "111", WS_VISIBLE | WS_CHILD | ES_CENTER | ES_NUMBER | WS_BORDER, 5, 200, 150, 30, hwnd, (HMENU)DlgIndexNumber, NULL, NULL);
+    hNumberControl = CreateWindowA("edit", "111", WS_VISIBLE | WS_CHILD | ES_CENTER | ES_NUMBER | WS_BORDER, 10, 200, 100, 30, hwnd, (HMENU)DlgIndexNumber, NULL, NULL);
+
+    hStaticControConnected = CreateWindowA("static", "Соединение отсутствует", WS_VISIBLE | WS_CHILD | ES_CENTER, 10, 270, 200, 30, hwnd, NULL, NULL, NULL);
 
     CreateWindowA("button", "Очистить", WS_VISIBLE | WS_CHILD | ES_CENTER, 10, 150, 100, 30, hwnd, (HMENU)OnClearField, NULL, NULL);
     CreateWindowA("button", "Считать введенный текст", WS_VISIBLE | WS_CHILD | ES_CENTER, 130, 150, 200, 30, hwnd, (HMENU)OnReadField, NULL, NULL);
     CreateWindowA("button", "Подсчет символов", WS_VISIBLE | WS_CHILD | ES_CENTER, 350, 150, 200, 30, hwnd, (HMENU)OnReadCountText, NULL, NULL);
 
-    CreateWindowA("button", "Считать введеные цифры", WS_VISIBLE | WS_CHILD | ES_CENTER, 150, 300, 200, 30, hwnd, (HMENU)OnReadNumberField, NULL, NULL);
+    CreateWindowA("button", "Считать введеные цифры", WS_VISIBLE | WS_CHILD | ES_CENTER, 130, 200, 200, 30, hwnd, (HMENU)OnReadNumberField, NULL, NULL);
+
+   
+}
+
+
+
+void WindowHide(HWND hwnd) {
+      DestroyWindow(hwnd);
+}
+
+void ConnectButtonView(HWND hwnd) {
+    ConnectedButton = CreateWindowA("button", "Разъединить", WS_VISIBLE | WS_CHILD | ES_CENTER, 250, 270, 100, 30, hwnd, (HMENU)DisconnectThis, NULL, NULL);
 }
 
 void SaveData(LPCSTR path) {
@@ -258,10 +289,11 @@ void SetOpenFileParams(HWND hwnd) {
     ofn.lpstrFilter = "*.txt";
     ofn.lpstrFileTitle = NULL;
     ofn.nMaxFileTitle = 0;
-    ofn.lpstrInitialDir = "C:\\source\\";
+    ofn.lpstrInitialDir = "C:\\";
     ofn.Flags = OFN_PATHMUSTEXIST | OFN_FILEMUSTEXIST;
 }
 
 void SetWindowStatus(std::string status) {
-    SetWindowTextA(hStaticControl, status.c_str());
+    SetWindowTextA(hStaticControConnected, status.c_str());
 }
+

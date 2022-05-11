@@ -1,7 +1,7 @@
 #pragma once
 #define OnSerialRefresh 1
 #define OnReadCountText 2
-
+#define DisconnectThis 3
 #define OnExitSoftware 4
 #define OnClearField 5
 #define OnMenuHelp 6
@@ -10,6 +10,7 @@
 #define OnLoadFile 9
 #define OnReadNumberField 11
 #define OnConnectRequest 12
+
 
 #define DlgIndexNumber 256
 #define	TextBufferSize 256
@@ -23,11 +24,12 @@ unsigned num;
 HWND hEditControl;
 HWND hStaticControl;
 HWND hNumberControl;
+HWND ConnectedButton;
 
 HWND hStaticControlReadText;
 HWND hStaticControlReadCountText;
 HWND hStaticControlReadNumber;
-
+HWND hStaticControConnected;
 HMENU ComPortSubMenu;
 HMENU ComPortListMenu;
 
@@ -48,6 +50,9 @@ LRESULT CALLBACK WindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam);
 
 void MainWndAddMenus(HWND hwnd);
 void MainWndAddWidgets(HWND hwnd);
+void WindowHide(HWND hwnd);
+void ConnectButtonView(HWND hwnd);
+
 void SaveData(LPCSTR path);
 void LoadData(LPCSTR path);
 void SetOpenFileParams(HWND hwnd);
@@ -56,3 +61,4 @@ int SerialBegin(int BaudRate, int Comport);
 void SetWindowStatus(std::string status);
 void ConnectRequest(void);
 void SerialRead(void);
+
