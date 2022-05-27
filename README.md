@@ -1,5 +1,4 @@
 # WindowsApp
 
-Небольшая прорамма интерфейс для подключения к com port на C++
+Simple C++ app.
 
-![alt text](https://github.com/gulyasmir/WindowsApp/blob/master/preview.png)
